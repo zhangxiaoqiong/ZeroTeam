@@ -122,7 +122,7 @@ app.post('/api/agents/:name/heartbeat', (req, res) => {
         current_task_id = COALESCE(?, current_task_id),
         last_activity = CURRENT_TIMESTAMP
     WHERE id = ?
-  `).run(status, task);
+  `).run(status, task_id, agent.id);
   
   //_id, agent.id 记录日志
   if (message) {
