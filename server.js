@@ -59,6 +59,39 @@ db.exec(`
     created_at TEXT DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (project_id) REFERENCES projects(id)
   );
+
+  -- 任务表（带DAG依赖）
+  CREATE TABLE IF NOT EXISTS todos (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT,
+    status TEXT DEFAULT 'pending',
+    priority TEXT DEFAULT 'medium',
+    category TEXT,
+    assignee TEXT,
+    project_id INTEGER,
+    requirement_id INTEGER,
+    due TEXT,
+    planned_start TEXT,
+    planned_end TEXT,
+    actual_start TEXT,
+    actual_end TEXT,
+    execution_result TEXT,
+    execution_time INTEGER,
+    completed_at TEXT,
+    -- DAG依赖字段
+    depends_on TEXT,  -- 依赖的任务ID，逗号分隔，如 "1,2,3"
+    dependents TEXT,   -- 被依赖的任务ID
+    created_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    updated_at TEXT DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (project_id) REFERENCES projects(id),
+    FOREIGN KEY (requirement_id) REFERENCES requirements(id)
+  );
+
+  -- 创建索引
+  CREATE INDEX IF NOT EXISTS idx_todos_status ON todos(status);
+  CREATE INDEX IF NOT EXISTS idx_todos_assignee ON todos(assignee);
+  CREATE INDEX IF NOT EXISTS idx_todos_project ON todos(project_id);
 `);
 
 // ========== Agent 管理 API ==========
@@ -314,15 +347,84 @@ app.post('/api/agents/:name/progress', (req, res) => {
 app.get('/api/agents/:name/pending-tasks', (req, res) => {
   const { name } = req.params;
   
+  // DAG: 只返回依赖已完成的etodos
   const tasks = db.prepare(`
     SELECT * FROM todos 
     WHERE (assignee = ? OR assignee IS NULL OR assignee = '')
     AND status = 'pending'
+    AND (
+      depends_on IS NULL 
+      OR depends_on = ''
+      OR (
+        SELECT COUNT(*) FROM todos t2 
+        WHERE t2.id IN (SELECT value FROM json_each(todos.depends_on))
+        AND t2.status != 'completed'
+      ) = 0
+    )
     ORDER BY priority DESC, planned_start ASC 
     LIMIT 5
   `).all(name);
   
   res.json(tasks);
+});
+
+// 获取可执行任务（DAG aware）
+app.get('/api/todos/runnable', (req, res) => {
+  const tasks = db.prepare(`
+    SELECT * FROM todos 
+    WHERE status = 'pending'
+    AND (
+      depends_on IS NULL 
+      OR depends_on = ''
+      OR (
+        SELECT COUNT(*) FROM todos t2 
+        WHERE t2.id IN (SELECT value FROM json_each(todos.depends_on))
+        AND t2.status != 'completed'
+      ) = 0
+    )
+    ORDER BY priority DESC, created_at ASC
+  `).all();
+  
+  res.json(tasks);
+});
+
+// 获取任务依赖图
+app.get('/api/todos/graph', (req, res) => {
+  const tasks = db.prepare(`SELECT id, title, status, depends_on FROM todos`).all();
+  res.json(tasks);
+});
+
+// 更新任务依赖
+app.put('/api/todos/:id/dependencies', (req, res) => {
+  const { id } = req.params;
+  const { depends_on } = req.body;
+  
+  db.prepare(`UPDATE todos SET depends_on = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?`)
+    .run(depends_on ? depends_on.join(',') : null, id);
+  
+  res.json({ message: '依赖已更新' });
+});
+
+// 检查任务是否可以执行
+app.get('/api/todos/:id/can-run', (req, res) => {
+  const { id } = req.params;
+  const task = db.prepare(`SELECT * FROM todos WHERE id = ?`).get(id);
+  
+  if (!task) return res.json({ canRun: false, reason: '任务不存在' });
+  if (task.status !== 'pending') return res.json({ canRun: false, reason: '任务不是待办状态' });
+  
+  if (!task.depends_on) return res.json({ canRun: true });
+  
+  const deps = task.depends_on.split(',').filter(Boolean);
+  const pendingDeps = db.prepare(`
+    SELECT COUNT(*) as count FROM todos 
+    WHERE id IN (${deps.map(() => '?').join(',')}) AND status != 'completed'
+  `).get(...deps);
+  
+  res.json({ 
+    canRun: pendingDeps.count === 0,
+    pendingDependencies: pendingDeps.count
+  });
 });
 
 // 任务到期自动提醒Webhook
