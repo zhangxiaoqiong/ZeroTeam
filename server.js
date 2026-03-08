@@ -250,15 +250,87 @@ app.get('/api/stats', (req, res) => {
   const completed = db.prepare('SELECT COUNT(*) as count FROM todos WHERE status = ?').get('completed').count;
   const failed = db.prepare('SELECT COUNT(*) as count FROM todos WHERE status = ?').get('failed').count;
   
-  // Agent 统计
-  const agentStats = db.prepare(`
-    SELECT status, COUNT(*) as count FROM agents GROUP BY status
-  `).all();
+  res.json({ total, pending, in_progress: inProgress, completed, failed });
+});
 
-  res.json({ 
-    total, pending, in_progress: inProgress, completed, failed, 
-    agents: agentStats 
-  });
+// ========== AI Agent 专用接口 ==========
+
+// Agent 领取任务（自动分配给自己）
+app.post('/api/agents/:name/claim-task', (req, res) => {
+  const { name } = req.params;
+  
+  // 查找该Agent的待办任务
+  const task = db.prepare(`
+    SELECT * FROM todos 
+    WHERE assignee = ? AND status = 'pending' 
+    ORDER BY priority DESC, planned_start ASC 
+    LIMIT 1
+  `).get(name);
+  
+  if (!task) {
+    return res.json({ message: '没有待领取的任务', task: null });
+  }
+  
+  // 更新任务状态为进行中
+  db.prepare(`
+    UPDATE todos SET status = 'in_progress', updated_at = CURRENT_TIMESTAMP WHERE id = ?
+  `).run(task.id);
+  
+  res.json({ message: '任务领取成功', task });
+});
+
+// Agent 完成任务
+app.post('/api/agents/:name/complete-task', (req, res) => {
+  const { name } = req.params;
+  const { task_id, result } = req.body;
+  
+  db.prepare(`
+    UPDATE todos SET 
+      status = 'completed', 
+      execution_result = ?,
+      completed_at = CURRENT_TIMESTAMP,
+      updated_at = CURRENT_TIMESTAMP 
+    WHERE id = ? AND assignee = ?
+  `).run(result, task_id, name);
+  
+  res.json({ message: '任务完成' });
+});
+
+// Agent 报告进度
+app.post('/api/agents/:name/progress', (req, res) => {
+  const { name } = req.params;
+  const { task_id, progress, message } = req.body;
+  
+  // 记录进度日志
+  db.prepare(`
+    INSERT INTO task_logs (task_id, agent_id, action, message)
+    SELECT ?, id, 'progress', ? FROM agents WHERE name = ?
+  `).run(task_id, message || `进度: ${progress}%`, name);
+  
+  res.json({ message: '进度已记录' });
+});
+
+// 获取Agent待办（AI专用，更智能的获取方式）
+app.get('/api/agents/:name/pending-tasks', (req, res) => {
+  const { name } = req.params;
+  
+  const tasks = db.prepare(`
+    SELECT * FROM todos 
+    WHERE (assignee = ? OR assignee IS NULL OR assignee = '')
+    AND status = 'pending'
+    ORDER BY priority DESC, planned_start ASC 
+    LIMIT 5
+  `).all(name);
+  
+  res.json(tasks);
+});
+
+// 任务到期自动提醒Webhook
+app.post('/api/webhook/task-due', (req, res) => {
+  const { callback_url, task_id } = req.body;
+  
+  // 这里可以配置回调通知
+  res.json({ message: 'Webhook已配置', task_id });
 });
 
 // ========== OpenClaw 专用接口 ==========
