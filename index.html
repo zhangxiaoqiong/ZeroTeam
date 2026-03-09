@@ -3,1072 +3,307 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>AI团队项目需求管理系统</title>
+  <title>ZeroTeam - Agent管理系统</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
   <style>
-    :root {
-      --bg: #0f0f23;
-      --card-bg: #1a1a2e;
-      --text: #eee;
-      --text-secondary: #888;
-      --border: #2a2a4a;
-      --primary: #6366f1;
-      --primary-hover: #4f46e5;
-      --success: #22c55e;
-      --warning: #f59e0b;
-      --danger: #ef4444;
-      --shadow: 0 4px 20px rgba(0,0,0,0.3);
-    }
-
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      transition: all 0.3s;
-    }
-
-    .container { max-width: 1400px; margin: 0 auto; padding: 20px; }
-
-    header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 30px;
-      padding-bottom: 20px;
-      border-bottom: 1px solid var(--border);
-    }
-
-    h1 { 
-      font-size: 1.8rem; 
-      background: linear-gradient(135deg, #6366f1, #a855f7);
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-    }
-
-    .stats-bar {
-      display: flex;
-      gap: 20px;
-    }
-
-    .stat-item {
-      background: var(--card-bg);
-      padding: 12px 24px;
-      border-radius: 10px;
-      text-align: center;
-    }
-
-    .stat-value { font-size: 1.5rem; font-weight: bold; }
-    .stat-label { font-size: 0.8rem; color: var(--text-secondary); }
-
-    .main-grid {
-      display: grid;
-      grid-template-columns: 300px 1fr;
-      gap: 20px;
-    }
-
-    .sidebar { display: flex; flex-direction: column; gap: 20px; }
-
-    .card {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 20px;
-      box-shadow: var(--shadow);
-    }
-
-    .card h2 {
-      font-size: 1.1rem;
-      margin-bottom: 16px;
-      color: var(--text-secondary);
-    }
-
-    .project-list { list-style: none; }
-
-    .project-item {
-      padding: 12px 16px;
-      margin-bottom: 8px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .project-item:hover { background: var(--border); }
-    .project-item.active { background: var(--primary); }
-
-    .project-stats {
-      font-size: 0.75rem;
-      color: var(--text-secondary);
-    }
-
-    .task-count {
-      background: var(--primary);
-      color: white;
-      padding: 2px 8px;
-      border-radius: 10px;
-      font-size: 0.75rem;
-    }
-
-    .add-btn {
-      width: 100%;
-      padding: 12px;
-      background: var(--primary);
-      color: white;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-
-    .add-btn:hover { background: var(--primary-hover); }
-
-    .task-list { display: flex; flex-direction: column; gap: 12px; }
-
-    .task-item {
-      background: var(--card-bg);
-      border-radius: 10px;
-      padding: 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      transition: all 0.2s;
-    }
-
-    .task-item:hover { transform: translateY(-2px); box-shadow: var(--shadow); }
-
-    .task-checkbox {
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-    }
-
-    .task-content { flex: 1; }
-
-    .task-title { font-weight: 500; margin-bottom: 4px; }
-
-    .task-meta {
-      font-size: 0.8rem;
-      color: var(--text-secondary);
-      display: flex;
-      gap: 12px;
-    }
-
-    .task-agent {
-      background: var(--primary);
-      color: white;
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 0.75rem;
-    }
-
-    .task-priority {
-      padding: 2px 8px;
-      border-radius: 4px;
-      font-size: 0.75rem;
-    }
-
-    .priority-high { background: #fee2e2; color: #dc2626; }
-    .priority-medium { background: #fef3c7; color: #d97706; }
-    .priority-low { background: #d1fae5; color: #059669; }
-
-    .task-actions {
-      display: flex;
-      gap: 8px;
-    }
-
-    .icon-btn {
-      background: none;
-      border: none;
-      color: var(--text-secondary);
-      cursor: pointer;
-      padding: 4px;
-      font-size: 1rem;
-    }
-
-    .icon-btn:hover { color: var(--text); }
-
-    .modal {
-      display: none;
-      position: fixed;
-      top: 0; left: 0; right: 0; bottom: 0;
-      background: rgba(0,0,0,0.7);
-      align-items: center;
-      justify-content: center;
-      z-index: 1000;
-    }
-
-    .modal.active { display: flex; }
-
-    .modal-content {
-      background: var(--card-bg);
-      border-radius: 12px;
-      padding: 24px;
-      width: 90%;
-      max-width: 500px;
-    }
-
-    .modal h2 { margin-bottom: 20px; }
-
-    .form-group { margin-bottom: 16px; }
-
-    label { display: block; margin-bottom: 6px; color: var(--text-secondary); font-size: 0.9rem; }
-
-    input, select {
-      width: 100%;
-      padding: 10px 14px;
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      background: var(--bg);
-      color: var(--text);
-      font-size: 0.95rem;
-    }
-
-    .modal-actions {
-      display: flex;
-      gap: 12px;
-      margin-top: 20px;
-    }
-
-    .btn {
-      padding: 10px 20px;
-      border: none;
-      border-radius: 8px;
-      cursor: pointer;
-      font-size: 0.9rem;
-    }
-
-    .btn-primary { background: var(--primary); color: white; }
-    .btn-secondary { background: var(--border); color: var(--text); }
-
-    .empty-state {
-      text-align: center;
-      padding: 60px 20px;
-      color: var(--text-secondary);
-    }
-
-    /* View Toggle Buttons */
-    .view-toggle {
-      display: flex;
-      gap: 4px;
-      background: var(--card-bg);
-      padding: 4px;
-      border-radius: 8px;
-    }
-
-    .view-btn {
-      padding: 8px 16px;
-      background: transparent;
-      border: none;
-      border-radius: 6px;
-      color: var(--text-secondary);
-      cursor: pointer;
-      font-size: 0.9rem;
-      transition: all 0.2s;
-    }
-
-    .view-btn:hover {
-      color: var(--text);
-      background: var(--border);
-    }
-
-    .view-btn.active {
-      background: var(--primary);
-      color: white;
-    }
-
-    .refresh-btn {
-      padding: 8px 12px;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--text);
-      cursor: pointer;
-      font-size: 1rem;
-      transition: all 0.2s;
-    }
-
-    .refresh-btn:hover {
-      background: var(--primary);
-      border-color: var(--primary);
-    }
-
-    .refresh-btn.loading {
-      animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-      from { transform: rotate(0deg); }
-      to { transform: rotate(360deg); }
-    }
-
-    /* Loading State */
-    .loading-overlay {
-      position: fixed;
-      top: 0;
-      left: 0;
-      right: 0;
-      bottom: 0;
-      background: rgba(15, 15, 35, 0.9);
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      z-index: 9999;
-    }
-
-    .loading-spinner {
-      width: 50px;
-      height: 50px;
-      border: 3px solid var(--border);
-      border-top-color: var(--primary);
-      border-radius: 50%;
-      animation: spin 1s linear infinite;
-    }
-
-    /* Toast Notifications */
-    .toast {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      padding: 12px 20px;
-      border-radius: 8px;
-      color: white;
-      font-size: 0.9rem;
-      z-index: 9999;
-      animation: slideIn 0.3s ease;
-      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-    }
-
-    .toast.success { background: #22c55e; }
-    .toast.error { background: #ef4444; }
-    .toast.warning { background: #f59e0b; }
-    .toast.info { background: #6366f1; }
-
-    @keyframes slideIn {
-      from { transform: translateX(100%); opacity: 0; }
-      to { transform: translateX(0); opacity: 1; }
-    }
-
-    /* Filter Bar */
-    .filter-bar {
-      display: flex;
-      gap: 12px;
-      margin-bottom: 16px;
-      flex-wrap: wrap;
-    }
-
-    .filter-btn {
-      padding: 6px 12px;
-      background: var(--card-bg);
-      border: 1px solid var(--border);
-      border-radius: 6px;
-      color: var(--text-secondary);
-      cursor: pointer;
-      font-size: 0.8rem;
-      transition: all 0.2s;
-    }
-
-    .filter-btn:hover, .filter-btn.active {
-      border-color: var(--primary);
-      color: var(--primary);
-    }
-
-    .filter-btn.active {
-      background: rgba(99, 102, 241, 0.1);
-    }
-
-    /* Task Cards Enhancement */
-    .task-item {
-      background: var(--card-bg);
-      border-radius: 10px;
-      padding: 16px;
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      transition: all 0.2s;
-      border: 1px solid transparent;
-    }
-
-    .task-item:hover {
-      transform: translateY(-2px);
-      box-shadow: var(--shadow);
-      border-color: var(--primary);
-    }
-
-    .task-checkbox {
-      width: 20px;
-      height: 20px;
-      cursor: pointer;
-      accent-color: var(--primary);
-    }
-
-    /* Drag Handle */
-    .drag-handle {
-      cursor: grab;
-      color: var(--text-secondary);
-      padding: 4px;
-    }
-
-    .drag-handle:active {
-      cursor: grabbing;
-    }
-
-    /* Quick Actions */
-    .quick-actions {
-      display: flex;
-      gap: 4px;
-      opacity: 0;
-      transition: opacity 0.2s;
-    }
-
-    .task-item:hover .quick-actions {
-      opacity: 1;
-    }
-
-    .quick-action-btn {
-      padding: 4px 8px;
-      background: var(--border);
-      border: none;
-      border-radius: 4px;
-      color: var(--text-secondary);
-      cursor: pointer;
-      font-size: 0.8rem;
-      transition: all 0.2s;
-    }
-
-    .quick-action-btn:hover {
-      background: var(--primary);
-      color: white;
-    }
-
-    .quick-action-btn.delete:hover {
-      background: var(--danger);
-    }
-
-    /* Status Badge */
-    .status-badge {
-      padding: 4px 10px;
-      border-radius: 12px;
-      font-size: 0.75rem;
-      font-weight: 500;
-    }
-
-    .status-pending { background: rgba(245, 158, 11, 0.2); color: #f59e0b; }
-    .status-in_progress { background: rgba(99, 102, 241, 0.2); color: #6366f1; }
-    .status-completed { background: rgba(34, 197, 94, 0.2); color: #22c55e; }
-    .status-failed { background: rgba(239, 68, 68, 0.2); color: #ef4444; }
-
-    /* Project Card Hover */
-    .project-item {
-      padding: 12px 16px;
-      margin-bottom: 8px;
-      border-radius: 8px;
-      cursor: pointer;
-      transition: all 0.2s;
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      border: 1px solid transparent;
-    }
-
-    .project-item:hover { 
-      background: var(--border); 
-      border-color: var(--primary);
-    }
-    .project-item.active { 
-      background: linear-gradient(135deg, rgba(99, 102, 241, 0.2), rgba(168, 85, 247, 0.2));
-      border-color: var(--primary);
-    }
-
-    /* Animation for new items */
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(10px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    .task-item.new {
-      animation: fadeInUp 0.3s ease;
-    }
-
-    /* Empty state illustration */
-    .empty-illustration {
-      font-size: 4rem;
-      margin-bottom: 16px;
-      opacity: 0.5;
-    }
+    body { font-family: system-ui, -apple-system, sans-serif; background: #0f0f23; color: #eee; min-height: 100vh; }
+    .glass { background: rgba(26, 26, 46, 0.95); backdrop-filter: blur(10px); }
   </style>
 </head>
 <body>
-  <div class="container">
-    <header>
-      <h1>🏢 AI公司项目管理系统 <span style="font-size:0.6em;background:#6366f1;padding:2px 8px;border-radius:4px;">CEO: main</span></h1>
-      <div style="display:flex;gap:12px;align-items:center;">
-        <div class="view-toggle">
-          <button onclick="switchView('list')" class="view-btn active" data-view="list">📋 列表</button>
-          <button onclick="switchView('board')" class="view-btn" data-view="board">📊 看板</button>
-          <button onclick="switchView('gantt')" class="view-btn" data-view="gantt">📈 甘特</button>
-          <button onclick="switchView('chart')" class="view-btn" data-view="chart">📉 统计</button>
-        </div>
-        <button onclick="refreshData()" class="refresh-btn" title="刷新数据">🔄</button>
-        <div class="stats-bar">
-        <div class="stat-item">
-          <div class="stat-value" id="totalTasks">-</div>
-          <div class="stat-label">总任务</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value" id="pendingTasks">-</div>
-          <div class="stat-label">待办</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value" id="progressTasks">-</div>
-          <div class="stat-label">进行中</div>
-        </div>
-        <div class="stat-item">
-          <div class="stat-value" id="completedTasks">-</div>
-          <div class="stat-label">已完成</div>
+  
+  <!-- 顶部导航 -->
+  <nav class="glass border-b border-slate-700 px-6 py-4 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <i class="fas fa-robot text-2xl text-indigo-400"></i>
+      <span class="text-xl font-bold">ZeroTeam</span>
+    </div>
+    <div class="flex gap-2">
+      <button onclick="showPage('dashboard')" class="px-4 py-2 rounded-lg bg-indigo-600 text-white"><i class="fas fa-chart-pie mr-2"></i>仪表盘</button>
+      <button onclick="showPage('projects')" class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600"><i class="fas fa-folder-open mr-2"></i>项目管理</button>
+      <button onclick="showPage('agents')" class="px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600"><i class="fas fa-robot mr-2"></i>Agent团队</button>
+    </div>
+    <div><span class="px-3 py-1 bg-indigo-600 rounded-full text-sm"><i class="fas fa-crown mr-1"></i>CEO: main</span></div>
+  </nav>
+
+  <!-- 仪表盘 -->
+  <div id="page-dashboard" class="p-6 max-w-7xl mx-auto">
+    <h1 class="text-2xl font-bold mb-6"><i class="fas fa-chart-pie text-indigo-400 mr-2"></i>数据概览</h1>
+    
+    <!-- 4个统计 -->
+    <div class="grid grid-cols-4 gap-4 mb-6">
+      <div class="glass rounded-xl p-5 border border-slate-700"><div class="text-3xl font-bold" id="stat-total">-</div><div class="text-slate-400 text-sm"><i class="fas fa-tasks mr-1"></i>总任务</div></div>
+      <div class="glass rounded-xl p-5 border border-slate-700"><div class="text-3xl font-bold text-yellow-400" id="stat-pending">-</div><div class="text-slate-400 text-sm"><i class="fas fa-hourglass-half mr-1"></i>待处理</div></div>
+      <div class="glass rounded-xl p-5 border border-slate-700"><div class="text-3xl font-bold text-blue-400" id="stat-progress">-</div><div class="text-slate-400 text-sm"><i class="fas fa-spinner mr-1"></i>进行中</div></div>
+      <div class="glass rounded-xl p-5 border border-slate-700"><div class="text-3xl font-bold text-green-400" id="stat-completed">-</div><div class="text-slate-400 text-sm"><i class="fas fa-check-circle mr-1"></i>已完成</div></div>
+    </div>
+
+    <!-- 3个概览 -->
+    <div class="grid grid-cols-3 gap-4 mb-6">
+      <div class="glass rounded-xl p-5 border border-slate-700">
+        <h3 class="font-semibold mb-4"><i class="fas fa-folder text-indigo-400 mr-2"></i>项目概览</h3>
+        <div class="space-y-3">
+          <div class="flex justify-between"><span class="text-slate-400">总项目数</span><span class="font-bold" id="stat-projects">-</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">进行中</span><span class="font-bold text-green-400" id="stat-projects-active">-</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">已完成</span><span class="font-bold text-purple-400" id="stat-projects-done">-</span></div>
         </div>
       </div>
-    </header>
-
-    <div class="main-grid">
-      <div class="sidebar">
-        <div class="card">
-          <h2>📁 项目列表</h2>
-          <ul class="project-list" id="projectList"></ul>
-          <button class="add-btn" onclick="showAddProject()">+ 新建项目</button>
+      <div class="glass rounded-xl p-5 border border-slate-700">
+        <h3 class="font-semibold mb-4"><i class="fas fa-list-check text-purple-400 mr-2"></i>需求概览</h3>
+        <div class="space-y-3">
+          <div class="flex justify-between"><span class="text-slate-400">总需求数</span><span class="font-bold" id="stat-reqs">-</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">待处理</span><span class="font-bold text-yellow-400" id="stat-reqs-pending">-</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">已完成</span><span class="font-bold text-green-400" id="stat-reqs-done">-</span></div>
         </div>
       </div>
-
-      <div class="task-area">
-        <div class="card">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-            <h2 id="currentProjectTitle">请选择项目</h2>
-            <button class="add-btn" style="width:auto;" onclick="showAddTask()">+ 添加任务</button>
-          </div>
-          <!-- 筛选栏 -->
-          <div class="filter-bar" id="filterBar">
-            <button class="filter-btn active" data-filter="all" onclick="setFilter('all')">全部</button>
-            <button class="filter-btn" data-filter="pending" onclick="setFilter('pending')">待办</button>
-            <button class="filter-btn" data-filter="in_progress" onclick="setFilter('in_progress')">进行中</button>
-            <button class="filter-btn" data-filter="completed" onclick="setFilter('completed')">已完成</button>
-          </div>
-          <div class="task-list" id="taskList">
-            <div class="empty-state">👈 请选择左侧项目查看任务</div>
-          </div>
+      <div class="glass rounded-xl p-5 border border-slate-700">
+        <h3 class="font-semibold mb-4"><i class="fas fa-robot text-cyan-400 mr-2"></i>Agent状态</h3>
+        <div class="space-y-3">
+          <div class="flex justify-between"><span class="text-slate-400">总Agent数</span><span class="font-bold" id="stat-agents">-</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">空闲</span><span class="font-bold text-green-400" id="stat-agents-idle">-</span></div>
+          <div class="flex justify-between"><span class="text-slate-400">忙碌</span><span class="font-bold text-yellow-400" id="stat-agents-busy">-</span></div>
         </div>
+      </div>
+    </div>
+
+    <!-- 2个详情 -->
+    <div class="grid grid-cols-2 gap-4">
+      <div class="glass rounded-xl p-5 border border-slate-700">
+        <h3 class="font-semibold mb-4"><i class="fas fa-chart-bar text-indigo-400 mr-2"></i>项目任务分布</h3>
+        <div id="project-task-dist" class="space-y-2">加载中...</div>
+      </div>
+      <div class="glass rounded-xl p-5 border border-slate-700">
+        <h3 class="font-semibold mb-4"><i class="fas fa-clock text-yellow-400 mr-2"></i>最近动态</h3>
+        <div id="recent-activity" class="space-y-2 text-sm text-slate-400">加载中...</div>
       </div>
     </div>
   </div>
 
-  <!-- 添加项目弹窗 -->
-  <div class="modal" id="projectModal">
-    <div class="modal-content">
-      <h2>新建项目</h2>
-      <div class="form-group">
-        <label>项目名称</label>
-        <input type="text" id="projectName" placeholder="输入项目名称">
+  <!-- 项目管理 - 卡片视图 -->
+  <div id="page-projects" class="p-6 max-w-7xl mx-auto hidden">
+    <h1 class="text-2xl font-bold mb-6"><i class="fas fa-folder-open text-indigo-400 mr-2"></i>项目管理</h1>
+    <div id="project-cards" class="grid grid-cols-3 gap-4">加载中...</div>
+  </div>
+
+  <!-- 项目详情 -->
+  <div id="page-project-detail" class="p-6 max-w-7xl mx-auto hidden">
+    <!-- 面包屑导航 -->
+    <div class="flex items-center gap-2 mb-6 text-sm">
+      <button onclick="showPage('projects')" class="text-indigo-400 hover:text-indigo-300"><i class="fas fa-arrow-left mr-1"></i>返回</button>
+      <span class="text-slate-500">/</span>
+      <span class="text-white font-medium" id="crumb-project">项目</span>
+      <span class="text-slate-500">/</span>
+      <span class="text-purple-400 font-medium">需求</span>
+      <span class="text-slate-500">/</span>
+      <span class="text-green-400 font-medium">任务</span>
+    </div>
+    
+    <div class="glass rounded-xl p-6 border border-slate-700 mb-6">
+      <div class="flex justify-between items-center">
+        <div><h2 class="text-xl font-bold" id="detail-title">-</h2><p class="text-slate-400 text-sm" id="detail-desc">-</p></div>
+        <div class="text-right"><div class="text-3xl font-bold text-indigo-400" id="detail-progress">0%</div><div class="text-slate-400 text-sm">完成度</div></div>
       </div>
-      <div class="form-group">
-        <label>项目描述</label>
-        <input type="text" id="projectDesc" placeholder="输入项目描述">
+    </div>
+    
+    <div class="grid grid-cols-2 gap-4">
+      <div class="glass rounded-xl p-6 border border-slate-700">
+        <h3 class="font-semibold mb-4"><i class="fas fa-list-check text-purple-400 mr-2"></i>需求列表 <span class="text-slate-500 text-sm" id="req-count"></span></h3>
+        <div id="detail-reqs" class="space-y-3">加载中...</div>
       </div>
-      <div class="modal-actions">
-        <button class="btn btn-primary" onclick="addProject()">创建</button>
-        <button class="btn btn-secondary" onclick="closeModal('projectModal')">取消</button>
+      <div class="glass rounded-xl p-6 border border-slate-700">
+        <h3 class="font-semibold mb-4"><i class="fas fa-tasks text-green-400 mr-2"></i>任务列表 <span class="text-slate-500 text-sm" id="task-count"></span></h3>
+        <div id="detail-tasks" class="space-y-2">加载中...</div>
       </div>
     </div>
   </div>
 
-  <!-- 添加任务弹窗 -->
-  <div class="modal" id="taskModal">
-    <div class="modal-content">
-      <h2>添加任务</h2>
-      <div class="form-group">
-        <label>需求名称</label>
-        <input type="text" id="taskRequirement" placeholder="输入需求名称（如：用户系统、支付模块等）">
-      </div>
-      <div class="form-group">
-        <label>任务标题</label>
-        <input type="text" id="taskTitle" placeholder="输入任务标题">
-      </div>
-      <div class="form-group">
-        <label>优先级</label>
-        <select id="taskPriority">
-          <option value="high">高</option>
-          <option value="medium" selected>中</option>
-          <option value="low">低</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>分配给</label>
-        <select id="taskAssignee">
-          <option value="">未分配</option>
-          <option value="writer-agent">writer-agent</option>
-          <option value="research-agent">research-agent</option>
-          <option value="pm-agent">pm-agent</option>
-          <option value="coder-agent">coder-agent</option>
-          <option value="analyst-agent">analyst-agent</option>
-          <option value="reviewer-agent">reviewer-agent</option>
-        </select>
-      </div>
-      <div class="form-group">
-        <label>计划开始</label>
-        <input type="datetime-local" id="taskPlannedStart">
-      </div>
-      <div class="form-group">
-        <label>计划结束</label>
-        <input type="datetime-local" id="taskPlannedEnd">
-      </div>
-      <div class="form-group">
-        <label>任务描述</label>
-        <input type="text" id="taskDesc" placeholder="输入任务描述">
-      </div>
-      <div class="modal-actions">
-        <button class="btn btn-primary" onclick="addTask()">添加</button>
-        <button class="btn btn-secondary" onclick="closeModal('taskModal')">取消</button>
-      </div>
-    </div>
+  <!-- Agent管理 -->
+  <div id="page-agents" class="p-6 max-w-7xl mx-auto hidden">
+    <h1 class="text-2xl font-bold mb-6"><i class="fas fa-robot text-indigo-400 mr-2"></i>Agent团队 <span class="text-slate-500 text-sm" id="agent-total"></span></h1>
+    <div class="grid grid-cols-4 gap-4" id="agent-grid">加载中...</div>
   </div>
 
   <script>
-    let projects = [];
-    let tasks = [];
     let currentProjectId = null;
-    let currentView = 'list';
-    let currentFilter = 'all';
-    let isLoading = false;
+    let allData = { projects: [], todos: [], reqs: [], agents: [] };
 
-    const API = 'http://localhost:3001/api';
-
-    // Toast 通知
-    function showToast(message, type = 'info') {
-      const toast = document.createElement('div');
-      toast.className = `toast ${type}`;
-      toast.textContent = message;
-      document.body.appendChild(toast);
-      setTimeout(() => toast.remove(), 3000);
+    async function loadAll() {
+      const [projects, todos, reqs, agents] = await Promise.all([
+        fetch('/api/projects').then(r => r.json()),
+        fetch('/api/todos').then(r => r.json()),
+        fetch('/api/requirements').then(r => r.json()),
+        fetch('/api/agents').then(r => r.json())
+      ]);
+      allData = { projects, todos, reqs, agents };
+      return allData;
     }
 
-    // 刷新数据
-    async function refreshData() {
-      if (isLoading) return;
-      const btn = document.querySelector('.refresh-btn');
-      if (btn) btn.classList.add('loading');
+    function showPage(page) {
+      ['dashboard', 'projects', 'project-detail', 'agents'].forEach(p => {
+        document.getElementById('page-' + p).classList.add('hidden');
+      });
+      document.getElementById('page-' + page).classList.remove('hidden');
       
-      await loadData();
+      if (page === 'dashboard') loadDashboard();
+      if (page === 'projects') loadProjects();
+      if (page === 'agents') loadAgents();
+    }
+
+    async function loadDashboard() {
+      const data = await loadAll();
+      const { projects, todos, reqs, agents } = data;
       
-      setTimeout(() => btn && btn.classList.remove('loading'), 500);
-    }
-
-    async function loadData() {
-      if (isLoading) return;
-      isLoading = true;
+      // 任务统计
+      document.getElementById('stat-total').textContent = todos.length;
+      document.getElementById('stat-pending').textContent = todos.filter(t => t.status === 'pending').length;
+      document.getElementById('stat-progress').textContent = todos.filter(t => t.status === 'in_progress').length;
+      document.getElementById('stat-completed').textContent = todos.filter(t => t.status === 'completed').length;
       
-      try {
-        const [pRes, tRes] = await Promise.all([
-          fetch(`${API}/projects`),
-          fetch(`${API}/todos`)
-        ]);
-        
-        if (!pRes.ok || !tRes.ok) {
-          throw new Error('API请求失败');
-        }
-        
-        projects = await pRes.json();
-        tasks = await tRes.json();
-        
-        renderProjects();
-        updateStats();
-        checkDueTasks();
-        
-        // 如果有项目默认选择第一个
-        if (projects.length > 0 && !currentProjectId) {
-          selectProject(projects[0].id);
-        } else {
-          renderTasks();
-        }
-        
-      } catch (e) {
-        console.error('加载失败:', e);
-        showToast('数据加载失败，请检查服务器', 'error');
-      } finally {
-        isLoading = false;
-      }
+      // 项目统计
+      document.getElementById('stat-projects').textContent = projects.length;
+      document.getElementById('stat-projects-active').textContent = projects.filter(p => p.status === 'active').length;
+      document.getElementById('stat-projects-done').textContent = projects.filter(p => p.status === 'completed').length;
+      
+      // 需求统计
+      document.getElementById('stat-reqs').textContent = reqs.length;
+      document.getElementById('stat-reqs-pending').textContent = reqs.filter(r => r.status === 'pending').length;
+      document.getElementById('stat-reqs-done').textContent = reqs.filter(r => r.status === 'completed').length;
+      
+      // Agent统计
+      document.getElementById('stat-agents').textContent = agents.length;
+      document.getElementById('stat-agents-idle').textContent = agents.filter(a => a.status === 'idle').length;
+      document.getElementById('stat-agents-busy').textContent = agents.filter(a => a.status === 'busy').length;
+      
+      // 项目任务分布
+      document.getElementById('project-task-dist').innerHTML = projects.map(p => {
+        const tasks = todos.filter(t => t.project_id === p.id);
+        const done = tasks.filter(t => t.status === 'completed').length;
+        const pct = tasks.length ? Math.round(done/tasks.length*100) : 0;
+        return '<div class="flex items-center gap-3"><span class="w-32 truncate text-slate-400">'+p.name+'</span><div class="flex-1 bg-slate-700 h-4 rounded-full overflow-hidden"><div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-full" style="width:'+pct+'%"></div></div><span class="text-sm w-12 text-right">'+pct+'%</span></div>';
+      }).join('') || '<div class="text-slate-500">暂无项目</div>';
+      
+      // 最近动态
+      const done = todos.filter(t => t.status === 'completed').slice(-5).reverse();
+      document.getElementById('recent-activity').innerHTML = done.length ? done.map(t => 
+        '<div class="flex justify-between p-2 bg-slate-800 rounded"><span><i class="fas fa-check-circle text-green-400 mr-2"></i>'+t.title+'</span><span class="text-slate-500">'+t.assignee+'</span></div>'
+      ).join('') : '<div class="text-slate-500">暂无动态</div>';
     }
 
-    function checkDueTasks() {
-      const today = new Date().toISOString().split('T')[0];
-      const dueTasks = tasks.filter(t => t.planned_start && t.planned_start <= today && t.status !== 'completed');
-      if (dueTasks.length > 0) {
-        showToast(`⚠️ ${dueTasks.length}个任务到期了！`, 'warning');
-      }
+    async function loadAgents() {
+      const data = await loadAll();
+      const { agents } = data;
+      const roles = {
+        'writer-agent': '内容写作',
+        'research-agent': '市场调研',
+        'pm-agent': '项目管理',
+        'coder-agent': '技术开发',
+        'analyst-agent': '数据分析',
+        'reviewer-agent': '质量审核'
+      };
+      
+      const statusColors = {
+        'idle': 'text-green-400',
+        'busy': 'text-yellow-400',
+        'offline': 'text-slate-500'
+      };
+      
+      const statusIcons = {
+        'idle': 'fa-check-circle',
+        'busy': 'fa-spinner fa-spin',
+        'offline': 'fa-moon'
+      };
+      
+      document.getElementById('agent-total').textContent = `(${agents.length}个)`;
+      document.getElementById('agent-grid').innerHTML = agents.map(a => 
+        '<div class="glass rounded-xl p-5 border border-slate-700 text-center hover:border-indigo-500 transition-all">'+
+          '<i class="fas fa-robot text-4xl text-indigo-400 mb-3"></i>'+
+          '<div class="font-bold text-lg">'+a.name+'</div>'+
+          '<div class="text-slate-400 text-sm mb-2">'+(roles[a.name]||'团队成员')+'</div>'+
+          '<div class="'+statusColors[a.status||'idle']+'">'+
+            '<i class="fas '+statusIcons[a.status||'idle']+' mr-1"></i> '+
+            ((a.status||'idle') === 'idle' ? '空闲' : (a.status||'idle') === 'busy' ? '工作中' : '离线')+
+          '</div>'+
+          '<div class="mt-3 text-xs text-slate-500">'+a.current_task || '等待任务'+'</div>'+
+        '</div>'
+      ).join('') || '<div class="text-slate-500">暂无Agent</div>';
     }
 
-    function showNotification(msg) {
-      showToast(msg, 'warning');
+    async function loadProjects() {
+      const data = await loadAll();
+      const { projects, todos } = data;
+      
+      document.getElementById('project-cards').innerHTML = projects.map(p => {
+        const tasks = todos.filter(t => t.project_id === p.id);
+        const done = tasks.filter(t => t.status === 'completed').length;
+        const pct = tasks.length ? Math.round(done/tasks.length*100) : 0;
+        return '<div onclick="openProject('+p.id+')" class="glass rounded-xl p-5 border border-slate-700 cursor-pointer hover:border-indigo-500 transition-all">'+
+          '<div class="flex justify-between items-start mb-3">'+
+            '<span class="font-bold text-lg">'+p.name+'</span>'+
+            '<span class="text-2xl font-bold text-indigo-400">'+pct+'%</span>'+
+          '</div>'+
+          '<p class="text-slate-400 text-sm mb-3">'+(p.description||'暂无描述')+'</p>'+
+          '<div class="w-full bg-slate-700 rounded-full h-2 mb-3">'+
+            '<div class="bg-gradient-to-r from-indigo-500 to-purple-500 h-2 rounded-full" style="width:'+pct+'%"></div>'+
+          '</div>'+
+          '<div class="flex justify-between text-slate-400 text-sm">'+
+            '<span><i class="fas fa-tasks mr-1"></i>'+tasks.length+'个任务</span>'+
+            '<span><i class="fas fa-check mr-1"></i>'+done+'完成</span>'+
+          '</div>'+
+        '</div>';
+      }).join('') || '<div class="text-slate-500">暂无项目</div>';
     }
 
-    function renderProjects() {
-      const list = document.getElementById('projectList');
-      list.innerHTML = projects.map(p => {
-        const count = tasks.filter(t => t.project_id == p.id).length;
-        return `<li class="project-item ${currentProjectId === p.id ? 'active' : ''}" onclick="selectProject(${p.id})">
-          <div>
-            <div style="font-weight:bold;">${p.name}</div>
-            ${p.description ? `<div style="font-size:0.7rem;color:#888;margin-top:4px;">${p.description.substring(0,30)}${p.description.length>30?'...':''}</div>` : ''}
-          </div>
-          <span class="task-count">${count}</span>
-        </li>`;
-      }).join('');
-    }
-
-    function selectProject(id) {
+    async function openProject(id) {
       currentProjectId = id;
-      renderProjects();
-      renderTasks();
-    }
-
-    // 设置任务筛选
-    function setFilter(filter) {
-      currentFilter = filter;
-      // 更新按钮状态
-      document.querySelectorAll('.filter-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.filter === filter);
-      });
-      renderTasks();
-    }
-
-    function switchView(view) {
-      currentView = view;
-      document.querySelectorAll('.view-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.view === view);
-      });
-      renderTasks();
-    }
-
-    function renderTasks() {
-      const list = document.getElementById('taskList');
-      const title = document.getElementById('currentProjectTitle');
+      const data = await loadAll();
+      const { projects, reqs, todos } = data;
       
-      if (!currentProjectId) {
-        title.textContent = '请选择项目';
-        list.innerHTML = '<div class="empty-state">👈 请选择左侧项目查看任务</div>';
-        return;
-      }
-
-      const project = projects.find(p => p.id === currentProjectId);
-      title.textContent = project ? project.name : '未知项目';
-
-      let projectTasks = tasks.filter(t => t.project_id == currentProjectId);
+      const p = projects.find(x => x.id === id);
+      if (!p) return;
       
-      // 应用筛选
-      if (currentFilter !== 'all') {
-        projectTasks = projectTasks.filter(t => t.status === currentFilter);
-      }
+      document.getElementById('crumb-project').textContent = p.name;
+      document.getElementById('detail-title').textContent = p.name;
+      document.getElementById('detail-desc').textContent = p.description || '';
       
-      if (projectTasks.length === 0) {
-        const filterMsg = currentFilter !== 'all' ? '（筛选：无匹配任务）' : '';
-        list.innerHTML = `<div class="empty-state">暂无任务${filterMsg}</div>`;
-        return;
-      }
-
-      if (currentView === 'board') {
-        renderBoardView(projectTasks, list);
-        return;
-      }
+      const tasks = todos.filter(t => t.project_id === id);
+      const done = tasks.filter(t => t.status === 'completed').length;
+      const pct = tasks.length ? Math.round(done/tasks.length*100) : 0;
+      document.getElementById('detail-progress').textContent = pct + '%';
       
-      if (currentView === 'gantt') {
-        renderGanttView(projectTasks, list);
-        return;
-      }
+      // 需求列表
+      const preqs = reqs.filter(r => r.project_id === id);
+      document.getElementById('req-count').textContent = `(${preqs.length}个)`;
+      document.getElementById('detail-reqs').innerHTML = preqs.length ? preqs.map(r => {
+        const rt = todos.filter(t => t.requirement_id === r.id);
+        const rd = rt.filter(t => t.status === 'completed').length;
+        const rpct = rt.length ? Math.round(rd/rt.length*100) : 0;
+        return '<div class="p-3 bg-slate-800 rounded-lg">'+
+          '<div class="flex justify-between mb-2">'+
+            '<span class="text-purple-400 font-medium"><i class="fas fa-list-check mr-2"></i>'+r.title+'</span>'+
+            '<span class="text-slate-400">'+rd+'/'+rt.length+'</span>'+
+          '</div>'+
+          '<div class="w-full bg-slate-700 h-2 rounded-full">'+
+            '<div class="bg-purple-500 h-2 rounded-full" style="width:'+rpct+'%"></div>'+
+          '</div>'+
+        '</div>';
+      }).join('') : '<div class="text-slate-500 text-center py-8"><i class="fas fa-inbox mr-2"></i>暂无需求</div>';
       
-      if (currentView === 'chart') {
-        renderChartView(projectTasks, list);
-        return;
-      }
-
-      // 默认列表视图
-      const requirements = {};
-      projectTasks.forEach(t => {
-        const req = t.requirement || '默认需求';
-        if (!requirements[req]) requirements[req] = [];
-        requirements[req].push(t);
-      });
-
-      let html = '';
-      for (const [reqName, reqTasks] of Object.entries(requirements)) {
-        html += `<div style="margin-bottom:20px;">
-          <div style="background:#1e293b;padding:10px 16px;border-radius:8px;margin-bottom:12px;display:flex;align-items:center;gap:8px;">
-            <span style="font-weight:bold;color:#a855f7;">📋 需求：${reqName}</span>
-            <span style="font-size:0.75rem;color:#888;">(${reqTasks.length}个任务)</span>
-          </div>`;
-        
-        html += reqTasks.map(t => `
-          <div class="task-item" style="flex-direction:column;align-items:stretch;margin-bottom:8px;">
-            <div style="display:flex;align-items:center;gap:12px;">
-              <input type="checkbox" class="task-checkbox" ${t.status === 'completed' ? 'checked' : ''} 
-                onchange="toggleTask(${t.id})">
-              <div class="task-content">
-                <div class="task-title" style="${t.status === 'completed' ? 'text-decoration:line-through;opacity:0.6' : ''}">${t.title}</div>
-              </div>
-              <div style="display:flex;gap:8px;align-items:center;">
-                <span class="task-priority priority-${t.priority}">${t.priority === 'high' ? '🔴' : t.priority === 'medium' ? '🟡' : '🟢'}</span>
-                <span class="status-badge status-${t.status}">
-                  ${t.status === 'completed' ? '✅ 完成' : t.status === 'in_progress' ? '🔄 进行' : '⏳ 待办'}
-                </span>
-                <div class="quick-actions">
-                  <button class="quick-action-btn" onclick="startTask(${t.id})" title="开始执行">▶️</button>
-                  <button class="quick-action-btn" onclick="editTask(${t.id})" title="编辑">✏️</button>
-                  <button class="quick-action-btn delete" onclick="deleteTask(${t.id})" title="删除">🗑️</button>
-                </div>
-              </div>
-            </div>
-            <div style="display:flex;gap:16px;margin-top:8px;padding-left:32px;font-size:0.8rem;color:#888;">
-              ${t.assignee ? `<span>👤 ${t.assignee}</span>` : ''}
-              ${t.planned_start ? `<span>📅 ${t.planned_start.substring(0,16).replace('T',' ')}</span>` : ''}
-            </div>
-          </div>
-        `).join('');
-        html += '</div>';
-      }
-
-      list.innerHTML = html;
-    }
-
-    function renderBoardView(projectTasks, list) {
-      const statuses = {pending:'⏳ 待办', in_progress:'🔄 进行中', completed:'✅ 已完成'};
-      let html = '<div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px;">';
+      // 任务列表
+      document.getElementById('task-count').textContent = `(${tasks.length}个)`;
+      document.getElementById('detail-tasks').innerHTML = tasks.length ? tasks.map(t => {
+        const icon = t.status === 'completed' ? 'fa-check-circle text-green-400' : t.status === 'in_progress' ? 'fa-spinner text-blue-400 fa-spin' : 'fa-hourglass-half text-yellow-400';
+        const style = t.status === 'completed' ? 'border-l-2 border-green-500' : t.status === 'in_progress' ? 'border-l-2 border-blue-500' : 'border-l-2 border-yellow-500';
+        return '<div class="flex justify-between p-3 bg-slate-800 rounded-lg '+style+'">'+
+          '<span><i class="fas '+icon+' mr-2"></i>'+t.title+'</span>'+
+          '<span class="text-slate-500 text-sm">'+(t.assignee||'未分配')+'</span>'+
+        '</div>';
+      }).join('') : '<div class="text-slate-500 text-center py-8"><i class="fas fa-inbox mr-2"></i>暂无任务</div>';
       
-      for (const [status, label] of Object.entries(statuses)) {
-        const tasks = projectTasks.filter(t => t.status === status);
-        html += `<div style="background:#1e293b;padding:16px;border-radius:8px;">
-          <div style="font-weight:bold;margin-bottom:12px;padding-bottom:8px;border-bottom:1px solid #374151;">${label} (${tasks.length})</div>
-          ${tasks.map(t => `
-            <div style="background:#0f172a;padding:10px;margin-bottom:8px;border-radius:6px;font-size:0.85rem;">
-              <div style="font-weight:500;">${t.title}</div>
-              <div style="color:#888;font-size:0.75rem;margin-top:4px;">
-                ${t.assignee ? '👤 '+t.assignee : ''} ${t.priority === 'high' ? '🔴' : t.priority === 'medium' ? '🟡' : '🟢'}
-              </div>
-            </div>
-          `).join('')}
-        </div>`;
-      }
-      html += '</div>';
-      list.innerHTML = html;
+      showPage('project-detail');
     }
 
-    function renderGanttView(projectTasks, list) {
-      const sorted = projectTasks.filter(t => t.planned_start).sort((a,b) => a.planned_start.localeCompare(b.planned_start));
-      if (sorted.length === 0) {
-        list.innerHTML = '<div class="empty-state">暂无设置时间的任务</div>';
-        return;
-      }
-      
-      let html = '<div style="overflow-x:auto;"><div style="min-width:800px;">';
-      sorted.forEach(t => {
-        const start = t.planned_start ? t.planned_start.substring(0,10) : '-';
-        const end = t.planned_end ? t.planned_end.substring(0,10) : '-';
-        const days = t.planned_start && t.planned_end ? 
-          Math.ceil((new Date(t.planned_end) - new Date(t.planned_start)) / (1000*60*60*24)) + 1 : 1;
-        const color = t.status === 'completed' ? '#22c55e' : t.status === 'in_progress' ? '#f59e0b' : '#6366f1';
-        
-        html += `<div style="display:flex;align-items:center;margin-bottom:12px;padding:8px;background:#1e293b;border-radius:6px;">
-          <div style="width:150px;font-size:0.85rem;">${t.title}</div>
-          <div style="flex:1;height:24px;background:#0f172a;border-radius:4px;position:relative;">
-            <div style="position:absolute;left:0;width:${Math.min(days*20,100)}%;height:100%;background:${color};border-radius:4px;"></div>
-          </div>
-          <div style="width:180px;font-size:0.75rem;color:#888;text-align:right;">${start} ~ ${end}</div>
-        </div>`;
-      });
-      html += '</div></div>';
-      list.innerHTML = html;
-    }
-
-    function renderChartView(projectTasks, list) {
-      const total = projectTasks.length;
-      const completed = projectTasks.filter(t => t.status === 'completed').length;
-      const inProgress = projectTasks.filter(t => t.status === 'in_progress').length;
-      const pending = projectTasks.filter(t => t.status === 'pending').length;
-      
-      const percent = total ? Math.round(completed/total*100) : 0;
-      
-      // Agent工作量
-      const agentStats = {};
-      projectTasks.forEach(t => {
-        if (t.assignee) {
-          agentStats[t.assignee] = (agentStats[t.assignee] || 0) + 1;
-        }
-      });
-
-      let html = `
-        <div style="display:grid;grid-template-columns:repeat(2,1fr);gap:20px;">
-          <div style="background:#1e293b;padding:20px;border-radius:8px;text-align:center;">
-            <div style="font-size:3rem;font-weight:bold;color:#22c55e;">${percent}%</div>
-            <div style="color:#888;">任务完成率</div>
-            <div style="margin-top:16px;height:20px;background:#0f172a;border-radius:10px;overflow:hidden;">
-              <div style="width:${percent}%;height:100%;background:linear-gradient(90deg,#22c55e,#4ade80);"></div>
-            </div>
-          </div>
-          
-          <div style="background:#1e293b;padding:20px;border-radius:8px;">
-            <div style="font-weight:bold;margin-bottom:12px;">任务分布</div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-              <span>✅ 已完成</span><span>${completed}</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;margin-bottom:8px;">
-              <span>🔄 进行中</span><span>${inProgress}</span>
-            </div>
-            <div style="display:flex;justify-content:space-between;">
-              <span>⏳ 待办</span><span>${pending}</span>
-            </div>
-          </div>
-          
-          <div style="background:#1e293b;padding:20px;border-radius:8px;grid-column:span 2;">
-            <div style="font-weight:bold;margin-bottom:12px;">Agent工作量</div>
-            ${Object.entries(agentStats).map(([agent,count]) => `
-              <div style="display:flex;align-items:center;margin-bottom:8px;">
-                <span style="width:120px;font-size:0.85rem;">${agent}</span>
-                <div style="flex:1;height:20px;background:#0f172a;border-radius:4px;">
-                  <div style="width:${total ? count/total*100 : 0}%;height:100%;background:#6366f1;border-radius:4px;"></div>
-                </div>
-                <span style="width:30px;text-align:right;font-size:0.85rem;">${count}</span>
-              </div>
-            `).join('')}
-          </div>
-        </div>
-      `;
-      list.innerHTML = html;
-    }
-
-    function editTask(id) {
-      const task = tasks.find(t => t.id === id);
-      if (!task) return;
-      document.getElementById('taskTitle').value = task.title || '';
-      document.getElementById('taskPriority').value = task.priority || 'medium';
-      document.getElementById('taskAssignee').value = task.assignee || '';
-      document.getElementById('taskPlannedStart').value = task.planned_start || '';
-      document.getElementById('taskPlannedEnd').value = task.planned_end || '';
-      document.getElementById('taskDesc').value = task.description || '';
-      document.getElementById('taskRequirement').value = task.requirement || '';
-      
-      document.getElementById('taskModal').classList.add('active');
-      
-      // 修改addTask函数以支持编辑
-      window.editingTaskId = id;
-    }
-    }
-
-    function updateStats() {
-      document.getElementById('totalTasks').textContent = tasks.length;
-      document.getElementById('pendingTasks').textContent = tasks.filter(t => t.status === 'pending').length;
-      document.getElementById('progressTasks').textContent = tasks.filter(t => t.status === 'in_progress').length;
-      document.getElementById('completedTasks').textContent = tasks.filter(t => t.status === 'completed').length;
-    }
-
-    function showAddProject() {
-      document.getElementById('projectModal').classList.add('active');
-    }
-
-    function showAddTask() {
-      if (!currentProjectId) {
-        alert('请先选择项目');
-        return;
-      }
-      document.getElementById('taskModal').classList.add('active');
-    }
-
-    function closeModal(id) {
-      document.getElementById(id).classList.remove('active');
-    }
-
-    async function addProject() {
-      const name = document.getElementById('projectName').value;
-      const description = document.getElementById('projectDesc').value;
-      if (!name) return;
-
-      await fetch(`${API}/projects`, {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({name, description})
-      });
-
-      closeModal('projectModal');
-      document.getElementById('projectName').value = '';
-      document.getElementById('projectDesc').value = '';
-      loadData();
-    }
-
-    async function addTask() {
-      const title = document.getElementById('taskTitle').value;
-      const requirement = document.getElementById('taskRequirement').value;
-      const priority = document.getElementById('taskPriority').value;
-      const assignee = document.getElementById('taskAssignee').value;
-      const planned_start = document.getElementById('taskPlannedStart').value;
-      const planned_end = document.getElementById('taskPlannedEnd').value;
-      const description = document.getElementById('taskDesc').value;
-      
-      if (!title) return;
-
-      if (window.editingTaskId) {
-        await fetch(`${API}/todos/${window.editingTaskId}`, {
-          method: 'PUT',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            title, requirement, priority, assignee, planned_start, planned_end, description
-          })
-        });
-        window.editingTaskId = null;
-      } else {
-        await fetch(`${API}/todos`, {
-          method: 'POST',
-          headers: {'Content-Type': 'application/json'},
-          body: JSON.stringify({
-            title, requirement, priority, assignee, planned_start, planned_end, description,
-            status: 'pending', project_id: currentProjectId
-          })
-        });
-      }
-
-      closeModal('taskModal');
-      document.getElementById('taskTitle').value = '';
-      document.getElementById('taskRequirement').value = '';
-      document.getElementById('taskPlannedStart').value = '';
-      document.getElementById('taskPlannedEnd').value = '';
-      document.getElementById('taskDesc').value = '';
-      loadData();
-      renderTasks();
-    }
-
-    async function toggleTask(id) {
-      const task = tasks.find(t => t.id === id);
-      const newStatus = task.status === 'completed' ? 'pending' : 'completed';
-      
-      await fetch(`${API}/todos/${id}`, {
-        method: 'PUT',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({status: newStatus})
-      });
-
-      loadData();
-      renderTasks();
-    }
-
-    async function deleteTask(id) {
-      if (!confirm('确定删除?')) return;
-      await fetch(`${API}/todos/${id}`, {method: 'DELETE'});
-      loadData();
-      renderTasks();
-    }
-
-    loadData();
+    loadDashboard();
   </script>
 </body>
 </html>
