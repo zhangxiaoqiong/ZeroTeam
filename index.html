@@ -140,10 +140,28 @@
     }
 
     function showPage(page) {
+      // 隐藏所有页面
       ['dashboard', 'projects', 'project-detail', 'agents'].forEach(p => {
         document.getElementById('page-' + p).classList.add('hidden');
       });
       document.getElementById('page-' + page).classList.remove('hidden');
+      
+      // 更新导航按钮状态
+      const navButtons = [
+        { id: 'dashboard', label: '仪表盘' },
+        { id: 'projects', label: '项目管理' },
+        { id: 'agents', label: 'Agent团队' }
+      ];
+      navButtons.forEach(btn => {
+        const el = document.querySelector(`button[onclick="showPage('${btn.id}')"]`);
+        if (el) {
+          if (btn.id === page) {
+            el.className = 'px-4 py-2 rounded-lg bg-indigo-600 text-white';
+          } else {
+            el.className = 'px-4 py-2 rounded-lg bg-slate-700 hover:bg-slate-600';
+          }
+        }
+      });
       
       if (page === 'dashboard') loadDashboard();
       if (page === 'projects') loadProjects();
