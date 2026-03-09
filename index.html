@@ -126,6 +126,7 @@
 
   <script>
     let currentProjectId = null;
+    let selectedRequirement = null;
     let allData = { projects: [], todos: [], reqs: [], agents: [] };
 
     async function loadAll() {
@@ -326,15 +327,16 @@
       const pct = tasks.length ? Math.round(done/tasks.length*100) : 0;
       document.getElementById('detail-progress').textContent = pct + '%';
       
-      // 需求列表
+      // 需求列表 - 点击可选中
       const preqs = reqs.filter(r => r.project_id === id);
       document.getElementById('req-count').textContent = `(${preqs.length}个)`;
       document.getElementById('detail-reqs').innerHTML = preqs.length ? preqs.map(r => {
         const rt = todos.filter(t => t.requirement_id === r.id);
         const rd = rt.filter(t => t.status === 'completed').length;
         const rpct = rt.length ? Math.round(rd/rt.length*100) : 0;
+        const isSelected = selectedRequirement === r.id;
         const statusColor = rpct === 100 ? 'text-green-400' : rpct > 0 ? 'text-yellow-400' : 'text-slate-400';
-        return '<div class="p-4 bg-slate-800 rounded-lg border-l-4 '+(rpct===100?'border-green-500':rpct>0?'border-yellow-500':'border-slate-600')+'">'+
+        return '<div onclick="selectRequirement('+r.id+')" class="p-4 bg-slate-800 rounded-lg border-l-4 cursor-pointer hover:bg-slate-700 '+(isSelected?'ring-2 ring-indigo-500 '+(rpct===100?'border-green-500':rpct>0?'border-yellow-500':'border-slate-600'):(rpct===100?'border-green-500':rpct>0?'border-yellow-500':'border-slate-600'))+'">'+
           '<div class="flex justify-between items-center mb-2">'+
             '<span class="text-purple-400 font-medium"><i class="fas fa-list-check mr-2"></i>'+r.title+'</span>'+
             '<span class="'+statusColor+' font-bold text-lg">'+rpct+'%</span>'+
@@ -348,9 +350,16 @@
         '</div>';
       }).join('') : '<div class="text-slate-500 text-center py-8"><i class="fas fa-inbox mr-2"></i>暂无需求</div>';
       
-      // 任务列表
-      document.getElementById('task-count').textContent = `(${tasks.length}个)`;
-      document.getElementById('detail-tasks').innerHTML = tasks.length ? tasks.map(t => {
+      // 任务列表 - 根据选中的需求筛选
+      let filteredTasks = tasks;
+      let taskFilterText = '';
+      if (selectedRequirement) {
+        const selReq = reqs.find(r => r.id === selectedRequirement);
+        filteredTasks = tasks.filter(t => t.requirement_id === selectedRequirement);
+        taskFilterText = selReq ? `【${selReq.title}】的任务` : '';
+      }
+      document.getElementById('task-count').textContent = taskFilterText ? `(${filteredTasks.length}个)` : `(${tasks.length}个)`;
+      document.getElementById('detail-tasks').innerHTML = filteredTasks.length ? filteredTasks.map(t => {
         const icon = t.status === 'completed' ? 'fa-check-circle text-green-400' : t.status === 'in_progress' ? 'fa-spinner text-blue-400 fa-spin' : 'fa-hourglass-half text-yellow-400';
         const style = t.status === 'completed' ? 'border-l-2 border-green-500' : t.status === 'in_progress' ? 'border-l-2 border-blue-500' : 'border-l-2 border-yellow-500';
         return '<div class="flex justify-between p-3 bg-slate-800 rounded-lg '+style+'">'+
@@ -360,6 +369,15 @@
       }).join('') : '<div class="text-slate-500 text-center py-8"><i class="fas fa-inbox mr-2"></i>暂无任务</div>';
       
       showPage('project-detail');
+    }
+
+    function selectRequirement(reqId) {
+      if (selectedRequirement === reqId) {
+        selectedRequirement = null; // 取消选中
+      } else {
+        selectedRequirement = reqId;
+      }
+      openProject(currentProjectId); // 重新渲染
     }
 
     loadDashboard();
