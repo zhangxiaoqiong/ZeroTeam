@@ -333,13 +333,17 @@
         const rt = todos.filter(t => t.requirement_id === r.id);
         const rd = rt.filter(t => t.status === 'completed').length;
         const rpct = rt.length ? Math.round(rd/rt.length*100) : 0;
-        return '<div class="p-3 bg-slate-800 rounded-lg">'+
-          '<div class="flex justify-between mb-2">'+
+        const statusColor = rpct === 100 ? 'text-green-400' : rpct > 0 ? 'text-yellow-400' : 'text-slate-400';
+        return '<div class="p-4 bg-slate-800 rounded-lg border-l-4 '+(rpct===100?'border-green-500':rpct>0?'border-yellow-500':'border-slate-600')+'">'+
+          '<div class="flex justify-between items-center mb-2">'+
             '<span class="text-purple-400 font-medium"><i class="fas fa-list-check mr-2"></i>'+r.title+'</span>'+
-            '<span class="text-slate-400">'+rd+'/'+rt.length+'</span>'+
+            '<span class="'+statusColor+' font-bold text-lg">'+rpct+'%</span>'+
           '</div>'+
-          '<div class="w-full bg-slate-700 h-2 rounded-full">'+
-            '<div class="bg-purple-500 h-2 rounded-full" style="width:'+rpct+'%"></div>'+
+          '<div class="flex items-center gap-3">'+
+            '<div class="flex-1 bg-slate-700 h-2 rounded-full">'+
+              '<div class="bg-purple-500 h-2 rounded-full" style="width:'+rpct+'%"></div>'+
+            '</div>'+
+            '<span class="text-slate-400 text-sm">'+rd+'/'+rt.length+'个任务</span>'+
           '</div>'+
         '</div>';
       }).join('') : '<div class="text-slate-500 text-center py-8"><i class="fas fa-inbox mr-2"></i>暂无需求</div>';
