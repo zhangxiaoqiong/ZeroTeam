@@ -121,7 +121,7 @@
   <!-- Agent管理 -->
   <div id="page-agents" class="p-6 max-w-7xl mx-auto hidden">
     <h1 class="text-2xl font-bold mb-6"><i class="fas fa-robot text-indigo-400 mr-2"></i>Agent团队 <span class="text-slate-500 text-sm" id="agent-total"></span></h1>
-    <div class="grid grid-cols-4 gap-4" id="agent-grid">加载中...</div>
+    <div class="grid grid-cols-2 gap-4" id="agent-grid">加载中...</div>
   </div>
 
   <script>
@@ -192,7 +192,8 @@
 
     async function loadAgents() {
       const data = await loadAll();
-      const { agents } = data;
+      const { agents, todos } = data;
+      
       const roles = {
         'writer-agent': '内容写作',
         'research-agent': '市场调研',
@@ -208,25 +209,61 @@
         'offline': 'text-slate-500'
       };
       
-      const statusIcons = {
-        'idle': 'fa-check-circle',
-        'busy': 'fa-spinner fa-spin',
-        'offline': 'fa-moon'
+      const agentIcons = {
+        'writer-agent': 'fa-pen',
+        'research-agent': 'fa-search',
+        'pm-agent': 'fa-tasks',
+        'coder-agent': 'fa-code',
+        'analyst-agent': 'fa-chart-line',
+        'reviewer-agent': 'fa-clipboard-check'
       };
       
+      // 计算每个Agent的任务统计
+      const agentStats = {};
+      agents.forEach(a => {
+        const agentTasks = todos.filter(t => t.assignee === a.name);
+        agentStats[a.name] = {
+          total: agentTasks.length,
+          done: agentTasks.filter(t => t.status === 'completed').length,
+          progress: agentTasks.filter(t => t.status === 'in_progress').length
+        };
+      });
+      
       document.getElementById('agent-total').textContent = `(${agents.length}个)`;
-      document.getElementById('agent-grid').innerHTML = agents.map(a => 
-        '<div class="glass rounded-xl p-5 border border-slate-700 text-center hover:border-indigo-500 transition-all">'+
-          '<i class="fas fa-robot text-4xl text-indigo-400 mb-3"></i>'+
-          '<div class="font-bold text-lg">'+a.name+'</div>'+
-          '<div class="text-slate-400 text-sm mb-2">'+(roles[a.name]||'团队成员')+'</div>'+
-          '<div class="'+statusColors[a.status||'idle']+'">'+
-            '<i class="fas '+statusIcons[a.status||'idle']+' mr-1"></i> '+
-            ((a.status||'idle') === 'idle' ? '空闲' : (a.status||'idle') === 'busy' ? '工作中' : '离线')+
+      document.getElementById('agent-grid').innerHTML = agents.map(a => {
+        const stats = agentStats[a.name] || { total: 0, done: 0, progress: 0 };
+        const pct = stats.total ? Math.round(stats.done / stats.total * 100) : 0;
+        return '<div class="glass rounded-xl p-5 border border-slate-700 hover:border-indigo-500 transition-all">'+
+          '<div class="flex items-center gap-3 mb-3">'+
+            '<div class="w-12 h-12 rounded-full bg-indigo-600 flex items-center justify-center">'+
+              '<i class="fas '+(agentIcons[a.name]||'fa-robot')+' text-xl"></i>'+
+            '</div>'+
+            '<div>'+
+              '<div class="font-bold text-lg">'+a.name+'</div>'+
+              '<div class="text-slate-400 text-sm">'+roles[a.name]+'</div>'+
+            '</div>'+
+            '<div class="ml-auto '+statusColors[a.status||'idle']+'">'+
+              '<i class="fas '+(a.status==='busy'?'fa-spinner fa-spin':a.status==='idle'?'fa-check-circle':'fa-moon')+'"></i> '+
+              (a.status==='idle'?'空闲':a.status==='busy'?'工作中':'离线')+
+            '</div>'+
           '</div>'+
-          '<div class="mt-3 text-xs text-slate-500">'+a.current_task || '等待任务'+'</div>'+
-        '</div>'
-      ).join('') || '<div class="text-slate-500">暂无Agent</div>';
+          '<div class="bg-slate-800 rounded-lg p-3 mb-3">'+
+            '<div class="text-xs text-slate-400 mb-2">当前任务</div>'+
+            '<div class="text-sm">'+(a.current_task || '等待分配')+'</div>'+
+          '</div>'+
+          '<div class="grid grid-cols-3 gap-2 text-center">'+
+            '<div class="bg-slate-800 rounded p-2"><div class="text-lg font-bold">'+stats.total+'</div><div class="text-xs text-slate-400">总任务</div></div>'+
+            '<div class="bg-slate-800 rounded p-2"><div class="text-lg font-bold text-green-400">'+stats.done+'</div><div class="text-xs text-slate-400">已完成</div></div>'+
+            '<div class="bg-slate-800 rounded p-2"><div class="text-lg font-bold text-blue-400">'+stats.progress+'</div><div class="text-xs text-slate-400">进行中</div></div>'+
+          '</div>'+
+          '<div class="mt-3">'+
+            '<div class="flex justify-between text-xs text-slate-400 mb-1"><span>完成率</span><span>'+pct+'%</span></div>'+
+            '<div class="w-full bg-slate-700 h-2 rounded-full">'+
+              '<div class="bg-gradient-to-r from-green-400 to-indigo-500 h-2 rounded-full" style="width:'+pct+'%"></div>'+
+            '</div>'+
+          '</div>'+
+        '</div>';
+      }).join('') || '<div class="text-slate-500">暂无Agent</div>';
     }
 
     async function loadProjects() {
